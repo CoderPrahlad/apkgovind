@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: matkaking-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-matkaking_secret}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-matkaking}
+      MYSQL_USER: ${MYSQL_USER:-matkaking}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-matkaking_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Express API Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: matkaking-api
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: mysql://matkaking:matkaking_password@mysql:3306/matkaking
+      CORS_ORIGIN: http://localhost,http://localhost:81
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: >
+      sh -c "npx prisma migrate deploy && npm start"
+
+  # Caddy Reverse Proxy
+  caddy:
+    image: caddy:2
+    container_name: matkaking-caddy
+    restart: unless-stopped
+    ports:
+      - "81:81"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./client/dist:/app/client/dist
+    depends_on:
+      - api
+
+volumes:
+  mysql_data:
+    driver: local

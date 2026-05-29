@@ -1,0 +1,34 @@
+# Caddyfile for MatkaKing Production
+# Serves the React SPA and proxies API/WebSocket requests to the Express server
+
+:81 {
+    # Serve React SPA static files
+    root * /app/client/dist
+    file_server
+
+    # API proxy - forward to Express backend
+    handle /api/* {
+        reverse_proxy localhost:3001 {
+            header_up Host {host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    # WebSocket proxy - forward Socket.IO connections
+    handle /socket.io/* {
+        reverse_proxy localhost:3001 {
+            header_up Host {host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    # SPA fallback - serve index.html for all non-static routes
+    handle {
+        try_files {path} /index.html
+        file_server
+    }
+}
