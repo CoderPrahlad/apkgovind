@@ -336,7 +336,7 @@ export default function MatkaKingLandingPage() {
               </motion.button>
 
               <a
-                href="https://matkaking.store/"
+                href="https://starking.vercel.app/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group border border-white/20 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all duration-300 px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-bold text-base sm:text-lg flex items-center gap-2"
